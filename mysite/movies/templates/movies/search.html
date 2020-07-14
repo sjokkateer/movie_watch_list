@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+Search
+{% endblock %}
+
+{% block content %}
+<div>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="field has-addons">
+            <div class="control" style="width: 100%;">
+                <input class="input" type="text" name="title" placeholder="Find a movie">
+            </div>
+            <div class="control">
+                <input type="submit" class="button is-info" value="Search">
+            </div>
+        </div>
+    </form>
+</div>
+{% if movie %}
+<div class="columns">
+    <div class="column">
+        <div class="card" style="overflow: hidden;">
+            <div class="card-image" style="float: left;">
+                <figure class="image">
+                    <img src="{{ movie.Poster }}" alt="{{ movie.title }} poster">
+                </figure>
+            </div>
+            <div class="card-content" style="overflow: hidden;">
+                <div class="media">
+                    <div class="media-content">
+                        <p class="title is-4">Title: {{ movie.Title }}</p>
+                        <p class="is-6">Released: {{ movie.Released }}</p>
+                        <p class="is-6">Duration: {{ movie.Runtime }}</p>
+                        <p class="is-6">Genre: {{ movie.Genre }}</p>
+                        <div class="content">
+                            Plot:
+                            {{ movie.Plot }}
+                            <br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
