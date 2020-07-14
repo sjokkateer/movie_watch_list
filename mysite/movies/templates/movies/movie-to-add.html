@@ -1,0 +1,11 @@
+{% extends 'movies/movie.html' %}
+
+{% block addition %}
+<div style="position: absolute; right: 0; bottom: 0; padding: 1.0rem">
+    <form action="{% url 'movies:favorite' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ movie.imdbID }}">
+        <input class="button is-primary" type="submit" value="Add">
+    </form>
+</div>
+{% endblock %}

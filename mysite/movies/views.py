@@ -5,6 +5,7 @@ from django.shortcuts import render
 import os
 import requests
 
+
 class OmdbApi:
     ENDPOINT = 'http://www.omdbapi.com/'
     KEY = os.getenv('OMDB_KEY')
@@ -40,9 +41,23 @@ def search(request):
     
     return render(request, 'movies/search.html', context=context)
 
-    # on post (which will be asynchronous)
-    # we will return a json response
-    # containing all the found movies and images
+
+def favorite(request):
+    WATCH_LIST = 'watch_list'
+    context = {}
+    
+    if WATCH_LIST not in request.session:
+        request.session[WATCH_LIST] = []
+    
+    if request.method == 'POST':
+        # could obtain the movie from the API or from a caching service
+        # id = request.POST['id']
+        request.session[WATCH_LIST].append(mock_response())
+
+    context[WATCH_LIST] = request.session[WATCH_LIST]
+
+    return render(request, 'movies/favorite.html', context=context)
+
 
 def mock_response():
     return {

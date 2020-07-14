@@ -1,0 +1,23 @@
+<div class="card" style="overflow: hidden; position: relative;">
+    <div class="card-image" style="float: left;">
+        <figure class="image">
+            <img src="{{ movie.Poster }}" alt="{{ movie.title }} poster">
+        </figure>
+    </div>
+    <div class="card-content" style="overflow: hidden;">
+        <div class="media">
+            <div class="media-content">
+                <p class="title is-4">Title: {{ movie.Title }}</p>
+                <p class="is-6">Released: {{ movie.Released }}</p>
+                <p class="is-6">Duration: {{ movie.Runtime }}</p>
+                <p class="is-6">Genre: {{ movie.Genre }}</p>
+                <div class="content">
+                    <br>
+                    {{ movie.Plot }}
+                    <br>
+                </div>
+            </div>
+        </div>
+        {% block addition %}{% endblock %}
+    </div>
+</div>

@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+Favorites
+{% endblock %}
+
+{% block content %}
+<div>
+    {% for movie in watch_list %}
+    <div class="columns" style="padding-bottom: 1rem;">
+        {% include 'movies/movie-watch-list.html' with movie=movie %}
+    </div>
+    {% empty %}
+    <div class="columns">
+        You have no movies on your watch list
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
