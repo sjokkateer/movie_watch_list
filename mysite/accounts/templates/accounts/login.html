@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+Login
+{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="field">
+        <label class="label">{{ form.email.label_tag }}</label>
+        <p class="control has-icons-left has-icons-right">
+            {{ form.email }}
+            <span class="icon is-small is-left">
+                <i class="fas fa-envelope"></i>
+            </span>
+            <span class="icon is-small is-right">
+                <i class="fas fa-check"></i>
+            </span>
+        </p>
+    </div>
+    <div class="field">
+        <label class="label">{{ form.password.label_tag }}</label>
+        <p class="control has-icons-left">
+            {{ form.password }}
+            <span class="icon is-small is-left">
+                <i class="fas fa-lock"></i>
+            </span>
+        </p>
+    </div>
+    <div class="control">
+        <input class="button is-link" type="submit" value="Log in">
+        <a style="position: absolute; right: 0; bottom: 0;" class="tag is-link is-light"
+            href="{% url 'accounts:register' %}">Don't have an account yet? Sign up</a>
+    </div>
+</form>
+{% endblock %}

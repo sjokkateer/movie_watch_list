@@ -1,4 +1,5 @@
 # from django.core.mail import send_mail
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
@@ -24,7 +25,7 @@ def search(request):
         request_handler = get_search
 
     return request_handler(request)
-    
+
 def post_search(request):
     title = request.POST.get('title')
     response = search_by_title(title)
@@ -84,6 +85,7 @@ def get_appropriate_context(response, search_title):
 def get_search(request):
     return render(request, 'movies/search.html', context={})
 
+@login_required
 def favorite(request):
     WATCH_LIST = 'watch_list'
     context = {}

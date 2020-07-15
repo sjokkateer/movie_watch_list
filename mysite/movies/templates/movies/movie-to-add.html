@@ -1,6 +1,7 @@
 {% extends 'movies/movie.html' %}
 
 {% block addition %}
+{% if user.is_authenticated %}
 <div style="position: absolute; right: 0; bottom: 0; padding: 1.0rem">
     <form action="{% url 'movies:favorite' %}" method="post">
         {% csrf_token %}
@@ -8,4 +9,5 @@
         <input class="button is-primary" type="submit" value="Add">
     </form>
 </div>
+{% endif %}
 {% endblock %}
