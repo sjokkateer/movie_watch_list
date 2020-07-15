@@ -1,7 +1,10 @@
 # from django.core.mail import send_mail
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from pathlib import Path
 
+import json
 import os
 import requests
 
@@ -14,33 +17,72 @@ class OmdbApi:
 def index(request):
     return render(request, 'movies/index.html')
 
-
 def search(request):
-    context = {}
-
     if request.method == 'POST':
-        context['movie'] = mock_response()
+        request_handler = post_search
+    else:
+        request_handler = get_search
 
-        # search_title = request.POST.get('title')
-        # url = OmdbApi.ENDPOINT
-
-        # response = requests.get(
-        #     url,
-        #     params={
-        #         't': search_title,
-        #         'apikey': OmdbApi.KEY
-        #     },
-        # )
-
-        # # 200 == OK
-        # if response.status_code == 200:
-        #     context['movie'] = response.json()
-        # # So in case this will be made asynchronously json responses should be returned.
-        # else:
-        #     context['search_title'] = search_title
+    return request_handler(request)
     
-    return render(request, 'movies/search.html', context=context)
+def post_search(request):
+    title = request.POST.get('title')
+    response = search_by_title(title)
+    context = get_appropriate_context(response, title)
 
+    return render(request, 'movies/search.html', context)
+
+def search_by_title(search_title):
+    if settings.DEBUG:
+        response = get_mock_response()
+    else:
+        response = get_movie(search_title)
+
+    return response
+
+def get_mock_response():
+    path = Path(__file__)
+    parent_dir = path.parent
+    path_to_mock_response_file = 'mock_responses/movie.json'
+
+    with open(f'{parent_dir}/{path_to_mock_response_file}') as f:
+        return json.load(f)
+
+def get_movie(search_title):
+    url = OmdbApi.ENDPOINT
+
+    return requests.get(
+        url,
+        params={
+            't': search_title,
+            'apikey': OmdbApi.KEY
+        },
+    )
+
+def get_appropriate_context(response, search_title):
+    context = {}
+    json_content = {}
+
+    if settings.DEBUG:
+        json_content = response
+    else:
+        OK = 200
+
+        if response.status_code == OK:
+            # Can still return an error in the json body, for ex if title not found.
+            json_content = response.json()
+
+    # if json_content is empty dictionary it evaluates to false
+    if json_content and 'Error' not in json_content:
+        context['movie'] = json_content
+    else:
+        # Maybe log the issue in the near future
+        context['search_title'] = search_title
+
+    return context
+
+def get_search(request):
+    return render(request, 'movies/search.html', context={})
 
 def favorite(request):
     WATCH_LIST = 'watch_list'
@@ -52,47 +94,8 @@ def favorite(request):
     if request.method == 'POST':
         # could obtain the movie from the API or from a caching service
         # id = request.POST['id']
-        request.session[WATCH_LIST].append(mock_response())
+        request.session[WATCH_LIST].append(get_mock_response())
 
     context[WATCH_LIST] = request.session[WATCH_LIST]
 
     return render(request, 'movies/favorite.html', context=context)
-
-
-def mock_response():
-    return {
-    "Title": "Terrifier",
-    "Year": "2016",
-    "Rated": "Unrated",
-    "Released": "15 Mar 2018",
-    "Runtime": "82 min",
-    "Genre": "Horror, Thriller",
-    "Director": "Damien Leone",
-    "Writer": "Damien Leone",
-    "Actors": "Jenna Kanell, Samantha Scaffidi, David Howard Thornton, Catherine Corcoran",
-    "Plot": "On Halloween night, Tara Heyes finds herself as the obsession of a sadistic murderer known as Art the Clown.",
-    "Language": "English",
-    "Country": "USA",
-    "Awards": "1 win & 5 nominations.",
-    "Poster": "https://m.media-amazon.com/images/M/MV5BYmMxNzA0OTUtOTJiOS00NTc4LWJmNTItMGM3OWE0N2Y0NjhjXkEyXkFqcGdeQXVyMTg5NjU4NjE@._V1_SX300.jpg",
-    "Ratings": [
-        {
-            "Source": "Internet Movie Database",
-            "Value": "5.6/10"
-        },
-        {
-            "Source": "Rotten Tomatoes",
-            "Value": "64%"
-        }
-    ],
-    "Metascore": "N/A",
-    "imdbRating": "5.6",
-    "imdbVotes": "12,389",
-    "imdbID": "tt4281724",
-    "Type": "movie",
-    "DVD": "27 Mar 2018",
-    "BoxOffice": "N/A",
-    "Production": "Epic Pictures",
-    "Website": "N/A",
-    "Response": "True"
-}
