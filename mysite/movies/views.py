@@ -80,3 +80,17 @@ def favorite(request):
     context[WATCH_LIST] = watch_list
 
     return render(request, 'movies/favorite.html', context=context)
+
+def remove(request):
+    if request.method == 'POST':
+        id = request.POST['id']
+        WATCH_LIST = 'watch_list'
+        watch_list = request.session.get(WATCH_LIST, [])
+
+        for movie in watch_list:
+            if movie['imdbID'] == id:
+                watch_list.remove(movie)
+                request.session[WATCH_LIST] = watch_list
+                break
+    
+    return HttpResponseRedirect(reverse('movies:favorite'))
