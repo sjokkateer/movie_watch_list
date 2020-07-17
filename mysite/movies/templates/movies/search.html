@@ -6,11 +6,10 @@ Search
 
 {% block content %}
 <div>
-    <form action="" method="post">
-        {% csrf_token %}
+    <form action="{% url 'movies:search' %}" method="GET">
         <div class="field has-addons">
             <div class="control" style="width: 100%;">
-                <input class="input" type="text" name="title" placeholder="Find a movie">
+                <input class="input" type="text" name="title" placeholder="Movie Title">
             </div>
             <div class="control">
                 <input type="submit" class="button is-info" value="Search">
