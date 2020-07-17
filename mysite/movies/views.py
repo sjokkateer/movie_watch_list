@@ -1,6 +1,8 @@
 # from django.core.mail import send_mail
+from . import models
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -60,37 +62,47 @@ def get_appropriate_context(response, search_title):
 
     return context
 
-# Should become a listview handling both post and get requests
+# Should become a more customized list view to handle pagination etc.
 @login_required
 def favorite(request):
-    WATCH_LIST = 'watch_list'
-    context = {}
-    
-    watch_list = request.session.get(WATCH_LIST, [])
-    
+    # List view would also remove this level of indentation
     if request.method == 'POST':
-        # API request is now made twice, should look into it later to cache or something.
-        id = request.POST['id']
-        movie = get_movie(search_text=id, query_search_param='i').json()
-        watch_list.append(movie)
+        imdb_id = request.POST.get('id', False)
+        title = request.POST.get('title', False)
 
-        request.session[WATCH_LIST] = watch_list
+        if (imdb_id and imdb_id != '') and (title and title != ''):
+            # Should ensure title is not an empty string
+            movie = models.Movie.objects.get_or_create(imdb_id=imdb_id, title=title)[0]
+            user = request.user
+            user.favorite_movies.add(movie.id)
+
         return HttpResponseRedirect(reverse('movies:favorite'))
 
-    context[WATCH_LIST] = watch_list
+    # In case of a get, we should obtain all movies from the API.
+    # Could've cached it in the session as one first step for efficiency.
+    # Otherwise with a few movies, refreshing this page will exceed our 1000 daily requests.
+    # But preferably later on I'll look into for ex a caching DB like Redis.
+    context = {'watch_list': get_movies(request.user)}
 
     return render(request, 'movies/favorite.html', context=context)
 
-def remove(request):
-    if request.method == 'POST':
-        id = request.POST['id']
-        WATCH_LIST = 'watch_list'
-        watch_list = request.session.get(WATCH_LIST, [])
+def get_movies(user):
+    movies = []
+    
+    for favorite_movie in user.favorite_movies.all():
+        movies.append(get_movie(favorite_movie.imdb_id, query_search_param='i').json())
 
-        for movie in watch_list:
-            if movie['imdbID'] == id:
-                watch_list.remove(movie)
-                request.session[WATCH_LIST] = watch_list
-                break
+    return movies
+
+def remove(request):
+    id = request.POST.get('id', False)
+
+    if request.method == 'POST' and id and id != '':
+        try:
+            movie = models.Movie.objects.get(imdb_id=id)
+            request.user.favorite_movies.remove(movie.id)
+        except ObjectDoesNotExist:
+            # Log error
+            pass
     
     return HttpResponseRedirect(reverse('movies:favorite'))

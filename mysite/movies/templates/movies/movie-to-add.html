@@ -6,6 +6,7 @@
     <form action="{% url 'movies:favorite' %}" method="post">
         {% csrf_token %}
         <input type="hidden" name="id" value="{{ movie.imdbID }}">
+        <input type="hidden" name="title" value="{{ movie.Title }}">
         <input class="button is-primary" type="submit" value="Add">
     </form>
 </div>
