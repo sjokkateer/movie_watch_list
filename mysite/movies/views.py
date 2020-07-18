@@ -1,5 +1,6 @@
 # from django.core.mail import send_mail
 from . import models
+from .daos import MoviesDAO
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -9,17 +10,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.views.generic.base import RedirectView
-
-from pathlib import Path
-
-import json
-import os
-import requests
-
-
-class OmdbApi:
-    ENDPOINT = 'http://www.omdbapi.com/'
-    KEY = os.getenv('OMDB_KEY')
 
 
 class MoviesHomeView(ListView):
@@ -36,50 +26,22 @@ class MoviesHomeView(ListView):
         movies = []
         
         for watch_listed_movie in watch_listed_movies:
-            movie = get_movie(watch_listed_movie['imdb_id'], 'i').json()
+            movie = MoviesDAO.get_movie(watch_listed_movie['imdb_id'], 'i').json()
             movie['total_times_listed'] = watch_listed_movie['total_times_listed']
             movies.append(movie)
 
         return movies
 
-
+# Make template view from this
 def search(request):
     context = {}
     title = request.GET.get('title', '')
     
     if title != '':
-        response = get_movie(title)
-        context = get_appropriate_context(response, title)
+        response = MoviesDAO.get_movie(title)
+        context = MoviesDAO.get_appropriate_context(response, title)
 
     return render(request, 'movies/search.html', context)
-
-def get_movie(search_text, query_search_param='t'):
-    url = OmdbApi.ENDPOINT
-
-    return requests.get(
-        url,
-        params={
-            query_search_param: search_text,
-            'apikey': OmdbApi.KEY
-        },
-    )
-
-def get_appropriate_context(response, search_title):
-    context = {}
-    OK = 200
-
-    if response.status_code == OK:
-        # Can still return an error in the json body, for ex if title not found.
-        json_content = response.json()
-
-    # if json_content is empty dictionary it evaluates to false
-    if json_content and 'Error' not in json_content:
-        context['movie'] = json_content
-    else:
-        # Maybe log the issue in the near future
-        context['search_title'] = search_title
-
-    return context
 
 
 @method_decorator(login_required, name='dispatch')
@@ -101,16 +63,7 @@ class WatchListView(ListView):
     def get_queryset(self):
         user = get_object_or_404(get_user_model(), id=self.request.user.id)
         
-        return get_movies(user)
-
-
-def get_movies(user):
-    movies = []
-    
-    for favorite_movie in user.favorite_movies.all():
-        movies.append(get_movie(favorite_movie.imdb_id, query_search_param='i').json())
-
-    return movies
+        return MoviesDAO.get_movies(user)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -125,4 +78,3 @@ class RemoveRedirectView(RedirectView):
             request.user.favorite_movies.remove(movie.id)
 
         return redirect(self.pattern_name)
-
