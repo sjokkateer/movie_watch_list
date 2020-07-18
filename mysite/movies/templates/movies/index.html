@@ -6,14 +6,14 @@ Home
 
 {% block content %}
 <div>
-    <h1>Welcome!</h1>
-    <p>
-        This web application allows
-        you to add movies to your 'watch list'
-        such that you don't forget which movies
-        you still would like to watch at some point
-        in time.
-    </p>
-    <a class="tag is-link is-light" href="{% url 'movies:search' %}">Search Movies</a>
+    {% for movie in watch_listed_movies %}
+    <div class="columns" style="padding-bottom: 1rem;">
+        {% include 'movies/watch-listed-movie.html' with movie=movie %}
+    </div>
+    {% empty %}
+    <div class="columns">
+        No Movies Enlisted on the Site Yet
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

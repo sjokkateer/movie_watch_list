@@ -3,6 +3,7 @@ from . import models
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -18,6 +19,27 @@ import requests
 class OmdbApi:
     ENDPOINT = 'http://www.omdbapi.com/'
     KEY = os.getenv('OMDB_KEY')
+
+
+class MoviesHomeView(ListView):
+    template_name = 'movies/index.html'
+    context_object_name = 'watch_listed_movies'
+    
+    def get_queryset(self):
+        watch_listed_movies = models.Movie.objects \
+                .annotate(total_times_listed=Count('favorite_by')) \
+                .values('imdb_id', 'total_times_listed') \
+                .filter(total_times_listed__gt=0) \
+                .order_by('-total_times_listed', 'imdb_id')
+
+        movies = []
+        
+        for watch_listed_movie in watch_listed_movies:
+            movie = get_movie(watch_listed_movie['imdb_id'], 'i').json()
+            movie['total_times_listed'] = watch_listed_movie['total_times_listed']
+            movies.append(movie)
+
+        return movies
 
 
 # Can become generic template view

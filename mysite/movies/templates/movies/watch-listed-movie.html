@@ -1,0 +1,7 @@
+{% extends 'movies/movie.html' %}
+
+{% block addition %}
+<div style="position: absolute; right: 0; bottom: 0; padding: 1.0rem">
+    # Times Enlisted <span class="tag is-info">{{ movie.total_times_listed }}</span>
+</div>
+{% endblock %}
