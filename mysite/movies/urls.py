@@ -6,6 +6,6 @@ app_name = 'movies'
 urlpatterns = [
     path('', views.MoviesHomeView.as_view(), name='index'),
     path('search', views.search, name='search'),
-    path('favorite', views.favorite, name='favorite'),
+    path('favorite', views.WatchListView.as_view(), name='favorite'),
     path('remove', views.remove, name='remove'),
 ]

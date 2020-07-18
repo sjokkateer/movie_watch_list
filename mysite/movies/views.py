@@ -1,12 +1,11 @@
 # from django.core.mail import send_mail
 from . import models
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
-from django.urls import reverse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from pathlib import Path
@@ -41,10 +40,6 @@ class MoviesHomeView(ListView):
 
         return movies
 
-
-# Can become generic template view
-def index(request):
-    return render(request, 'movies/index.html')
 
 def search(request):
     context = {}
@@ -84,29 +79,28 @@ def get_appropriate_context(response, search_title):
 
     return context
 
-# Should become a more customized list view to handle pagination etc.
-@login_required
-def favorite(request):
-    # List view would also remove this level of indentation
-    if request.method == 'POST':
+
+@method_decorator(login_required, name='dispatch')
+class WatchListView(ListView):
+    template_name = 'movies/favorite.html'
+    context_object_name = 'watch_listed'
+
+    def post(self, request, *args, **kwargs):
         imdb_id = request.POST.get('id', False)
         title = request.POST.get('title', False)
 
         if (imdb_id and imdb_id != '') and (title and title != ''):
-            # Should ensure title is not an empty string
             movie = models.Movie.objects.get_or_create(imdb_id=imdb_id, title=title)[0]
             user = request.user
             user.favorite_movies.add(movie.id)
 
-        return HttpResponseRedirect(reverse('movies:favorite'))
+        return redirect('movies:favorite')
 
-    # In case of a get, we should obtain all movies from the API.
-    # Could've cached it in the session as one first step for efficiency.
-    # Otherwise with a few movies, refreshing this page will exceed our 1000 daily requests.
-    # But preferably later on I'll look into for ex a caching DB like Redis.
-    context = {'watch_list': get_movies(request.user)}
+    def get_queryset(self):
+        user = get_object_or_404(get_user_model(), id=self.request.user.id)
+        
+        return get_movies(user)
 
-    return render(request, 'movies/favorite.html', context=context)
 
 def get_movies(user):
     movies = []
@@ -116,6 +110,7 @@ def get_movies(user):
 
     return movies
 
+@login_required
 def remove(request):
     id = request.POST.get('id', False)
 
@@ -127,4 +122,4 @@ def remove(request):
             # Log error
             pass
     
-    return HttpResponseRedirect(reverse('movies:favorite'))
+    return redirect('movies:favorite')

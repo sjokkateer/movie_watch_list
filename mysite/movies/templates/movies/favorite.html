@@ -6,7 +6,7 @@ Favorites
 
 {% block content %}
 <div>
-    {% for movie in watch_list %}
+    {% for movie in watch_listed %}
     <div class="columns" style="padding-bottom: 1rem;">
         {% include 'movies/movie-watch-list.html' with movie=movie %}
     </div>
