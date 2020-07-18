@@ -9,7 +9,7 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, TemplateView
 
 
 class MoviesHomeView(ListView):
@@ -32,16 +32,16 @@ class MoviesHomeView(ListView):
 
         return movies
 
-# Make template view from this
-def search(request):
-    context = {}
-    title = request.GET.get('title', '')
-    
-    if title != '':
-        response = MoviesDAO.get_movie(title)
-        context = MoviesDAO.get_appropriate_context(response, title)
 
-    return render(request, 'movies/search.html', context)
+class SearchView(TemplateView):
+    template_name = 'movies/search.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        title = self.request.GET.get('title', '')
+        response = MoviesDAO.get_movie(title)
+        return {**context, **MoviesDAO.get_appropriate_context(response, title)}
 
 
 @method_decorator(login_required, name='dispatch')
