@@ -7,5 +7,5 @@ urlpatterns = [
     path('', views.MoviesHomeView.as_view(), name='index'),
     path('search', views.search, name='search'),
     path('favorite', views.WatchListView.as_view(), name='favorite'),
-    path('remove', views.remove, name='remove'),
+    path('remove', views.RemoveRedirectView.as_view(), name='remove'),
 ]

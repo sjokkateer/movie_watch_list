@@ -4,9 +4,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
+from django.http import HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
+from django.views.generic.base import RedirectView
 
 from pathlib import Path
 
@@ -110,16 +112,17 @@ def get_movies(user):
 
     return movies
 
-@login_required
-def remove(request):
-    id = request.POST.get('id', False)
 
-    if request.method == 'POST' and id and id != '':
-        try:
-            movie = models.Movie.objects.get(imdb_id=id)
+@method_decorator(login_required, name='dispatch')
+class RemoveRedirectView(RedirectView):
+    pattern_name = 'movies:favorite'
+
+    def post(self, request, *args, **kwargs):
+        id = request.POST.get('id', False)
+        
+        if id and id != '':
+            movie = get_object_or_404(models.Movie, imdb_id=id)
             request.user.favorite_movies.remove(movie.id)
-        except ObjectDoesNotExist:
-            # Log error
-            pass
-    
-    return redirect('movies:favorite')
+
+        return redirect(self.pattern_name)
+
